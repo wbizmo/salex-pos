@@ -7,7 +7,7 @@
   "scripts": {
     "start": "electron .",
     "generate-icons": "node scripts/generate-icons.js",
-    "dist": "electron-builder --windows nsis"
+    "dist": "npm run generate-icons && electron-builder --windows nsis"
   },
   "dependencies": {
     "is-online": "^9.0.0",
