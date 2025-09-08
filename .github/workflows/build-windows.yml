@@ -8,6 +8,8 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}  # <-- add your PAT as a repo secret named GH_TOKEN
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
