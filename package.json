@@ -1,7 +1,7 @@
 {
-  "name": "salex-pos",
-  "version": "0.1.0",
-  "description": "Salex is a powerful self-hosted application that simplifies inventory management for businesses of all sizes.",
+  "name": "salesplus-pos",
+  "version": "0.2.0",
+  "description": "Sales+ POS is a powerful self-hosted application that simplifies inventory management for businesses of all sizes.",
   "author": "Zivora Logic Technologies <zivoratechnologies@gmail.com>",
   "main": "main.js",
   "scripts": {
@@ -19,8 +19,8 @@
     "png-to-ico": "^2.1.4"
   },
   "build": {
-    "appId": "com.zivora.salexpos",
-    "productName": "Salex POS",
+    "appId": "com.zivora.salespluspos",
+    "productName": "Sales+ POS",
     "artifactName": "${productName} Setup ${version}.${ext}",
     "directories": {
       "output": "dist"

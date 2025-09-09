@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate icons (from logo_base.png)
+      - name: Generate icons (from icon.png)
         run: npm run generate-icons
 
       - name: Build Windows installer

@@ -4,15 +4,15 @@ const pngToIco = require('png-to-ico');
 
 (async () => {
   try {
-    // Path to your high-res logo
-    const basePng = path.join(__dirname, '..', 'build', 'logo_base.png');
+    // Path to your high-res icon.png
+    const basePng = path.join(__dirname, '..', 'build', 'icon.png');
     const outputIco = path.join(__dirname, '..', 'build', 'icon.ico');
 
     if (!fs.existsSync(basePng)) {
       throw new Error(`Base image not found: ${basePng}`);
     }
 
-    // Generate the ICO from the base logo
+    // Generate the ICO from the PNG
     const buffer = await pngToIco(basePng);
 
     fs.writeFileSync(outputIco, buffer);
