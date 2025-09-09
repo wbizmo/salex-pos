@@ -21,7 +21,7 @@
   "build": {
     "appId": "com.zivora.salespluspos",
     "productName": "Sales+ POS",
-    "artifactName": "${productName} Setup ${version}.${ext}",
+    "artifactName": "SalesPlusPOS-Setup-${version}.${ext}",
     "directories": {
       "output": "dist"
     },
@@ -34,7 +34,8 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "shortcutName": "Sales+ POS"
     }
   }
 }
