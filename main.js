@@ -6,10 +6,11 @@ const packageJson = require('./package.json');
 let mainWindow;
 let splash;
 let offlineOverlay;
+let monitorInterval;
 const url = 'https://salepro.globevest.site';
 
 async function createWindows() {
-  // Splash screen
+  // --- Splash screen ---
   splash = new BrowserWindow({
     width: 400,
     height: 300,
@@ -21,7 +22,7 @@ async function createWindows() {
   });
   splash.loadFile(path.join(__dirname, 'splash.html'));
 
-  // Main app window (hidden until ready)
+  // --- Main app window (hidden until ready) ---
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -35,7 +36,7 @@ async function createWindows() {
   });
   mainWindow.setMenuBarVisibility(false);
 
-  // Pre-create offline overlay (hidden by default)
+  // --- Offline overlay (modal) ---
   offlineOverlay = new BrowserWindow({
     parent: mainWindow,
     modal: true,
@@ -49,51 +50,67 @@ async function createWindows() {
   });
   offlineOverlay.loadFile(path.join(__dirname, 'offline.html'));
 
-  // First check internet before loading main URL
+  // --- First internet check before loading ---
   if (await isOnline()) {
     mainWindow.loadURL(url);
   } else {
     offlineOverlay.show();
   }
 
-  // When web app finishes loading, hide splash, show main
+  // --- When web app finishes loading, swap splash → main ---
   mainWindow.webContents.on('did-finish-load', () => {
     setTimeout(() => {
-      if (splash) splash.close();
-      mainWindow.show();
+      if (splash && !splash.isDestroyed()) splash.close();
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show();
     }, 1500);
   });
 
-  // Always keep title fixed
+  // --- Lock window title ---
   mainWindow.on('page-title-updated', (event) => {
     event.preventDefault();
-    mainWindow.setTitle(`Sales+ POS v${packageJson.version}`);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setTitle(`Sales+ POS v${packageJson.version}`);
+    }
   });
 
-  // Hybrid monitoring
-  // Event-based detection
+  // --- Hybrid monitoring ---
+  // 1. Event-based (instant feel)
   mainWindow.webContents.executeJavaScript(`
     const { ipcRenderer } = require('electron');
     window.addEventListener('offline', () => ipcRenderer.send('offline'));
     window.addEventListener('online', () => ipcRenderer.send('online'));
-  `);
+  `).catch(err => console.error('Failed to inject online listeners:', err));
 
-  // Backup check every 5s
-  setInterval(async () => {
-    if (!(await isOnline())) {
-      ipcMain.emit('offline');
-    } else {
-      ipcMain.emit('online');
+  // 2. Backup check every 5s (safe)
+  monitorInterval = setInterval(async () => {
+    try {
+      const online = await isOnline();
+      if (!online) {
+        ipcMain.emit('offline');
+      } else {
+        ipcMain.emit('online');
+      }
+    } catch (err) {
+      console.error('isOnline check failed:', err);
     }
   }, 5000);
 
-  // IPC handling (just show/hide overlay, don’t reload main window)
+  // --- IPC handling (toggle overlay only) ---
   ipcMain.on('offline', () => {
-    if (!offlineOverlay.isVisible()) offlineOverlay.show();
+    if (offlineOverlay && !offlineOverlay.isDestroyed() && !offlineOverlay.isVisible()) {
+      offlineOverlay.show();
+    }
   });
   ipcMain.on('online', () => {
-    if (offlineOverlay.isVisible()) offlineOverlay.hide();
+    if (offlineOverlay && !offlineOverlay.isDestroyed() && offlineOverlay.isVisible()) {
+      offlineOverlay.hide();
+    }
   });
 }
+
+// --- Cleanup timers when quitting ---
+app.on('before-quit', () => {
+  if (monitorInterval) clearInterval(monitorInterval);
+});
 
 app.whenReady().then(createWindows);
