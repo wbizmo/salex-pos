@@ -1,4 +1,4 @@
-name: Build Salex POS - Windows
+name: Build Sales+ POS - Windows
 
 on:
   push:
@@ -9,7 +9,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     env:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}  # <-- add your PAT as a repo secret named GH_TOKEN
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,6 +21,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Auto bump version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version patch --no-git-tag-version
+          git add package.json package-lock.json
+          git commit -m "ci: bump version [skip ci]" || echo "No changes to commit"
+          git push || echo "Skipping push"
 
       - name: Generate icons (from icon.png)
         run: npm run generate-icons

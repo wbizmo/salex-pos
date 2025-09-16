@@ -1,7 +1,7 @@
 {
   "name": "salesplus-pos",
-  "version": "0.2.0",
-  "description": "Sales+ POS is a powerful self-hosted application that simplifies inventory management for businesses of all sizes.",
+  "version": "0.4.0",
+  "description": "Sales+ is a powerful self-hosted business suite with a full range of features including POS, inventory, accounting, CRM, and HR management. It's designed to simplify your operations and give you complete control.",
   "author": "Zivora Logic Technologies <zivoratechnologies@gmail.com>",
   "main": "main.js",
   "scripts": {

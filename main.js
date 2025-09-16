@@ -6,15 +6,15 @@ const packageJson = require('./package.json');
 let mainWindow;
 let splash;
 let offlineOverlay;
-let monitorInterval;
 const url = 'https://salepro.globevest.site';
 
 async function createWindows() {
   // --- Splash screen ---
   splash = new BrowserWindow({
-    width: 400,
+    width: 420,
     height: 300,
     frame: false,
+    transparent: true,
     alwaysOnTop: true,
     resizable: false,
     backgroundColor: '#f4f6fa',
@@ -22,50 +22,53 @@ async function createWindows() {
   });
   splash.loadFile(path.join(__dirname, 'splash.html'));
 
-  // --- Main app window (hidden until ready) ---
+  // --- Main app window ---
   mainWindow = new BrowserWindow({
-    width: 1200,
+    width: 1280,
     height: 800,
+    minWidth: 1024,
+    minHeight: 700,
     show: false,
+    backgroundColor: '#f4f6fa',
     icon: path.join(__dirname, 'build/icon.ico'),
     title: `Sales+ POS v${packageJson.version}`,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      partition: 'persist:main', // persist sessions/cookies
+      partition: 'persist:main',
     },
   });
   mainWindow.setMenuBarVisibility(false);
 
-  // --- Offline overlay (modal) ---
+  // --- Offline overlay (confined to mainWindow only) ---
   offlineOverlay = new BrowserWindow({
     parent: mainWindow,
     modal: true,
     show: false,
     frame: false,
-    fullscreen: true,
+    resizable: false,
+    fullscreenable: false,
     backgroundColor: '#fff',
-    webPreferences: {
-      nodeIntegration: true,
-    },
+    webPreferences: { nodeIntegration: true },
   });
+  offlineOverlay.setBounds(mainWindow.getBounds());
   offlineOverlay.loadFile(path.join(__dirname, 'offline.html'));
 
-  // --- First internet check before loading ---
+  // --- Load target URL or offline page ---
   if (await isOnline()) {
     mainWindow.loadURL(url);
   } else {
     offlineOverlay.show();
   }
 
-  // --- When web app finishes loading, swap splash → main ---
+  // --- Seamless splash → app ---
   mainWindow.webContents.on('did-finish-load', () => {
     setTimeout(() => {
       if (splash && !splash.isDestroyed()) splash.close();
       if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show();
-    }, 1500);
+    }, 800); // shorter delay for native feel
   });
 
-  // --- Lock window title ---
+  // --- Keep title fixed ---
   mainWindow.on('page-title-updated', (event) => {
     event.preventDefault();
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -73,16 +76,15 @@ async function createWindows() {
     }
   });
 
-  // --- Hybrid monitoring ---
-  // 1. Event-based (instant feel)
+  // --- Monitor online/offline ---
   mainWindow.webContents.executeJavaScript(`
     const { ipcRenderer } = require('electron');
     window.addEventListener('offline', () => ipcRenderer.send('offline'));
     window.addEventListener('online', () => ipcRenderer.send('online'));
   `).catch(err => console.error('Failed to inject online listeners:', err));
 
-  // 2. Backup check every 5s (safe)
-  monitorInterval = setInterval(async () => {
+  // --- Backup check every 5s ---
+  setInterval(async () => {
     try {
       const online = await isOnline();
       if (!online) {
@@ -95,22 +97,19 @@ async function createWindows() {
     }
   }, 5000);
 
-  // --- IPC handling (toggle overlay only) ---
+  // --- IPC → toggle offline overlay ---
   ipcMain.on('offline', () => {
     if (offlineOverlay && !offlineOverlay.isDestroyed() && !offlineOverlay.isVisible()) {
+      offlineOverlay.setBounds(mainWindow.getBounds());
       offlineOverlay.show();
     }
   });
+
   ipcMain.on('online', () => {
     if (offlineOverlay && !offlineOverlay.isDestroyed() && offlineOverlay.isVisible()) {
       offlineOverlay.hide();
     }
   });
 }
-
-// --- Cleanup timers when quitting ---
-app.on('before-quit', () => {
-  if (monitorInterval) clearInterval(monitorInterval);
-});
 
 app.whenReady().then(createWindows);
