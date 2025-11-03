@@ -29,7 +29,8 @@ jobs:
           npm version patch --no-git-tag-version
           git add package.json package-lock.json
           git commit -m "ci: bump version [skip ci]" || echo "No changes to commit"
-          git push || echo "Skipping push"
+          git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main || echo "Skipping push"
+
 
       - name: Generate icons (from icon.png)
         run: npm run generate-icons
