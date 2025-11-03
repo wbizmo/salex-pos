@@ -6,7 +6,7 @@ const packageJson = require('./package.json');
 let mainWindow;
 let splash;
 let offlineOverlay;
-const url = 'https://salepro.globevest.site';
+const url = 'https://server23.salesplus.sbs';
 
 async function createWindows() {
   // --- Splash screen ---
